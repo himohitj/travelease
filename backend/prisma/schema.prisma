@@ -1,0 +1,338 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  password          String?
+  googleId          String?   @unique
+  firstName         String
+  lastName          String
+  phone             String?
+  phoneVerified     Boolean   @default(false)
+  emailVerified     Boolean   @default(false)
+  profileImage      String?
+  dateOfBirth       DateTime?
+  gender            String?
+  preferences       Json?
+  location          Json?
+  isActive          Boolean   @default(true)
+  role              Role      @default(USER)
+  rewardPoints      Int       @default(0)
+  totalEarned       Int       @default(0)
+  totalRedeemed     Int       @default(0)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  lastLoginAt       DateTime?
+
+  // Relations
+  roadmaps          Roadmap[]
+  itineraries       Itinerary[]
+  hiddenGems        HiddenGem[]
+  rewards           RewardTransaction[]
+  bookings          Booking[]
+  reviews           Review[]
+  favorites         Favorite[]
+
+  @@map("users")
+}
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  password          String?
+  googleId          String?   @unique
+  firstName         String
+  lastName          String
+  phone             String?
+  phoneVerified     Boolean   @default(false)
+  emailVerified     Boolean   @default(false)
+  profileImage      String?
+  dateOfBirth       DateTime?
+  gender            String?
+  preferences       Json?
+  location          Json?
+  isActive          Boolean   @default(true)
+  role              Role      @default(USER)
+  rewardPoints      Int       @default(0)
+  totalEarned       Int       @default(0)
+  totalRedeemed     Int       @default(0)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  lastLoginAt       DateTime?
+
+  // Relations
+  roadmaps          Roadmap[]
+  itineraries       Itinerary[]
+  hiddenGems        HiddenGem[]
+  rewards           RewardTransaction[]
+  bookings          Booking[]
+  reviews           Review[]
+  favorites         Favorite[]
+
+  @@map("users")
+}
+
+model Itinerary {
+  id          String   @id @default(cuid())
+  destination String
+  budget      Int
+  days        Int
+  startDate   DateTime
+  language    String   @default("English")
+  plan        Json
+  pdfUrl      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User?    @relation(fields: [userId], references: [id])
+  userId      String?
+
+  @@map("itineraries")
+}
+
+model Roadmap {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime
+  budget      Float?
+  destinations Json
+  activities  Json
+  hotels      Json?
+  transport   Json?
+  status      RoadmapStatus @default(DRAFT)
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("roadmaps")
+}
+
+model Hotel {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  address       String
+  city          String
+  state         String
+  country       String
+  latitude      Float
+  longitude     Float
+  rating        Float    @default(0)
+  pricePerNight Float
+  amenities     String[]
+  images        String[]
+  contactPhone  String?
+  contactEmail  String?
+  website       String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  bookings      Booking[]
+  reviews       Review[]
+  favorites     Favorite[]
+
+  @@map("hotels")
+}
+
+model Restaurant {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  address      String
+  city         String
+  state        String
+  country      String
+  latitude     Float
+  longitude    Float
+  rating       Float    @default(0)
+  priceRange   PriceRange
+  cuisine      String[]
+  openingHours Json
+  contactPhone String?
+  images       String[]
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  reviews      Review[]
+  favorites    Favorite[]
+
+  @@map("restaurants")
+}
+
+model HiddenGem {
+  id          String        @id @default(cuid())
+  userId      String
+  name        String
+  description String
+  address     String
+  city        String
+  state       String
+  country     String
+  latitude    Float
+  longitude   Float
+  category    String
+  images      String[]
+  tips        String[]
+  bestTime    String?
+  difficulty  String?
+  status      GemStatus     @default(PENDING)
+  adminNotes  String?
+  pointsAwarded Int         @default(0)
+  isPublic    Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviews     Review[]
+  favorites   Favorite[]
+
+  @@map("hidden_gems")
+}
+
+model RewardTransaction {
+  id            String            @id @default(cuid())
+  userId        String
+  type          TransactionType
+  points        Int
+  description   String
+  referenceId   String?
+  status        TransactionStatus @default(COMPLETED)
+  metadata      Json?
+  createdAt     DateTime          @default(now())
+
+  // Relations
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("reward_transactions")
+}
+
+model Booking {
+  id          String        @id @default(cuid())
+  userId      String
+  hotelId     String
+  checkIn     DateTime
+  checkOut    DateTime
+  guests      Int
+  totalAmount Float
+  status      BookingStatus @default(PENDING)
+  paymentId   String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hotel       Hotel         @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  @@map("bookings")
+}
+
+model Review {
+  id           String    @id @default(cuid())
+  userId       String
+  entityId     String
+  entityType   EntityType
+  rating       Int
+  comment      String?
+  images       String[]
+  isVerified   Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relations
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hotel        Hotel?    @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  restaurant   Restaurant? @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  hiddenGem    HiddenGem? @relation(fields: [entityId], references: [id], onDelete: Cascade)
+
+  @@map("reviews")
+}
+
+model Favorite {
+  id         String     @id @default(cuid())
+  userId     String
+  entityId   String
+  entityType EntityType
+  createdAt  DateTime   @default(now())
+
+  // Relations
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hotel      Hotel?     @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  restaurant Restaurant? @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  hiddenGem  HiddenGem? @relation(fields: [entityId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, entityId, entityType])
+  @@map("favorites")
+}
+
+// Enums
+enum Role {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum RoadmapStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum PriceRange {
+  BUDGET
+  MID_RANGE
+  EXPENSIVE
+}
+
+enum GemStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum TransactionType {
+  EARNED
+  REDEEMED
+  BONUS
+  PENALTY
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum EntityType {
+  HOTEL
+  RESTAURANT
+  HIDDEN_GEM
+}
